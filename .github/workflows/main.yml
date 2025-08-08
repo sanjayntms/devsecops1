@@ -65,7 +65,15 @@ jobs:
 
       - name: Deploy Bicep Template
         run: az deployment group create --resource-group $AZURE_RG --template-file infra/main.bicep
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./app 
+      
       - name: Deploy App to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
