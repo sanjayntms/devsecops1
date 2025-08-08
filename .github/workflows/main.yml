@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       target_job:
-        description: 'Job to run (security-checks, build-deploy, dast-scan)'
+        description: 'Job to run (security-checks, build-deploy, dast-scan or runall)'
         required: false
         default: 'security-checks'
 
@@ -21,7 +21,7 @@ permissions:
 jobs:
   security-checks:
     name: Code & Infra Security Scanning
-    if: ${{ github.event.inputs.target_job == 'security-checks' }}
+    if: ${{ github.event.inputs.target_job == 'security-checks' || github.event.inputs.target_job == 'runall' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -48,7 +48,8 @@ jobs:
 
   build-deploy:
     name: Build & Deploy to Azure
-    if: ${{ github.event.inputs.target_job == 'build-deploy' }}
+    if: ${{ github.event.inputs.target_job == 'build-deploy' || github.event.inputs.target_job == 'runall' }}
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -72,11 +73,14 @@ jobs:
           package: ./app
 
   dast-scan:
+  
    permissions:
       contents: read
       issues: write
    name: OWASP ZAP DAST Scan
-  # needs: build-deploy
+   if: ${{ github.event.inputs.target_job == 'dast-scan' || github.event.inputs.target_job == 'runall' }}
+
+   needs: build-deploy
    runs-on: ubuntu-latest
    env:
     AZURE_WEBAPP_NAME: ntms-secure-nodejs-app
