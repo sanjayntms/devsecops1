@@ -72,6 +72,9 @@ jobs:
           package: ./app
 
   dast-scan:
+   permissions:
+      contents: read
+      issues: write
    name: OWASP ZAP DAST Scan
   # needs: build-deploy
    runs-on: ubuntu-latest
