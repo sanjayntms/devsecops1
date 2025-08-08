@@ -82,11 +82,14 @@ jobs:
    runs-on: ubuntu-latest
    steps:
     - name: Run ZAP Baseline Scan
+     
       run: |
-        docker run --rm -v $(pwd):/zap/wrk/:rw \
-          ghcr.io/zaproxy/zap-extensions:stable-baseline \
-          -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
-          -r zap_report.html || echo "ZAP scan failed, continuing for report"
+       docker run --rm \
+       -v $(pwd):/zap/wrk/:rw \
+       owasp/zap2docker-stable \
+       zap-baseline.py \
+       -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
+       -r zap_report.html || echo "ZAP scan failed, continuing for report"
 
     - name: Upload ZAP Report
       if: success() || failure()  # Upload even if ZAP errors
