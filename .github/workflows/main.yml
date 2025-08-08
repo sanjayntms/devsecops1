@@ -73,7 +73,7 @@ jobs:
 
   dast-scan:
    name: OWASP ZAP DAST Scan
-   needs: build-deploy
+  # needs: build-deploy
    runs-on: ubuntu-latest
    env:
     AZURE_WEBAPP_NAME: ntms-secure-nodejs-app
