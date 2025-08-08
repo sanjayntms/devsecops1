@@ -69,18 +69,18 @@ jobs:
           package: ./app
 
   dast-scan:
-    name: OWASP ZAP DAST Scan
-    needs: build-deploy
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run ZAP Baseline Scan
-        run: |
-          docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
-            -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
-            -r zap_report.html
+   name: OWASP ZAP DAST Scan
+   needs: build-deploy
+   runs-on: ubuntu-latest
+   steps:
+    - name: Run ZAP Baseline Scan
+      run: |
+        docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
+          -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
+          -r zap_report.html
 
-      - name: Upload ZAP Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: zap-report
-          path: zap_report.html
+    - name: Upload ZAP Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: zap-report
+        path: zap_report.html
