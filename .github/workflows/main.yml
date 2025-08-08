@@ -2,10 +2,17 @@ name: DevSecOps Azure PoC
 
 on:
   workflow_dispatch:
+    inputs:
+      target_job:
+        description: 'Job to run (security-checks, build-deploy, dast-scan)'
+        required: true
+        default: 'security-checks'
+
 env:
   AZURE_RG: devsecops-node-rg
   AZURE_WEBAPP_NAME: ntms-secure-nodejs-app
   LOCATION: centralindia
+
 permissions:
   actions: read
   contents: read
@@ -14,6 +21,7 @@ permissions:
 jobs:
   security-checks:
     name: Code & Infra Security Scanning
+    if: ${{ github.event.inputs.target_job == 'security-checks' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -40,12 +48,8 @@ jobs:
 
   build-deploy:
     name: Build & Deploy to Azure
-    needs: security-checks
+    if: ${{ github.event.inputs.target_job == 'build-deploy' }}
     runs-on: ubuntu-latest
-    env:
-      AZURE_RG: devsecops-node-rg
-      AZURE_WEBAPP_NAME: ntms-secure-nodejs-app
-      LOCATION: centralindia
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -55,12 +59,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Create RG
-        run: |
-          az group create --name $AZURE_RG --location $LOCATION
+      - name: Create Resource Group
+        run: az group create --name $AZURE_RG --location $LOCATION
+
       - name: Deploy Bicep Template
         run: az deployment group create --resource-group $AZURE_RG --template-file infra/main.bicep
-
 
       - name: Deploy App to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -69,25 +72,18 @@ jobs:
           package: ./app
 
   dast-scan:
-   name: OWASP ZAP DAST Scan
-   needs: build-deploy
-   runs-on: ubuntu-latest
-   steps:
-    - name: Run ZAP Baseline Scan
-      run: |
-        docker run --rm -v $(pwd):/zap/wrk/:rw ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-          -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
-          -r zap_report.html
+    name: OWASP ZAP DAST Scan
+    if: ${{ github.event.inputs.target_job == 'dast-scan' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run ZAP Baseline Scan
+        run: |
+          docker run --rm -v $(pwd):/zap/wrk/:rw ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+            -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
+            -r zap_report.html
 
-    - name: Upload ZAP Report
-      uses: actions/upload-artifact@v4
-      with:
-        name: zap-report
-        path: zap_report.html
-
-
-    - name: Upload ZAP Report
-      uses: actions/upload-artifact@v4
-      with:
-        name: zap-report
-        path: zap_report.html
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap_report.html
