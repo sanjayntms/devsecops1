@@ -49,7 +49,7 @@ jobs:
   build-deploy:
     name: Build & Deploy to Azure
     if: ${{ github.event.inputs.target_job == 'build-deploy' || github.event.inputs.target_job == 'runall' }}
-
+    needs: security-checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
