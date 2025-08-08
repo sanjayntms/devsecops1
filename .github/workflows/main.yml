@@ -83,8 +83,6 @@ jobs:
     - name: Run ZAP Baseline Scan
       run: |
         docker run --rm \
-           #   -v $(pwd):/zap/wrk/:rw \
-           #   --user $(id -u):$(id -g) \
           zaproxy/zap-stable \
           zap-baseline.py \
           -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
