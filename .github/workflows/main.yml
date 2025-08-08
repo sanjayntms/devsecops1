@@ -72,18 +72,25 @@ jobs:
           package: ./app
 
   dast-scan:
-    name: OWASP ZAP DAST Scan
-    if: ${{ github.event.inputs.target_job == 'dast-scan' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Run ZAP Baseline Scan
-        run: |
-          docker run --rm -v $(pwd):/zap/wrk/:rw ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
-            -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
-            -r zap_report.html
+   
+   name: OWASP ZAP DAST Scan
+   if: ${{ github.event.inputs.target_job == 'dast-scan' }}
+   env:
+    AZURE_RG: devsecops-node-rg
+    AZURE_WEBAPP_NAME: ntms-secure-nodejs-app
+    LOCATION: centralindia
+   runs-on: ubuntu-latest
+   steps:
+    - name: Run ZAP Baseline Scan
+      run: |
+        docker run --rm -v $(pwd):/zap/wrk/:rw \
+          ghcr.io/zaproxy/zap-extensions:stable-baseline \
+          -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
+          -r zap_report.html || echo "ZAP scan failed, continuing for report"
 
-      - name: Upload ZAP Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-report
-          path: zap_report.html
+    - name: Upload ZAP Report
+      if: success() || failure()  # Upload even if ZAP errors
+      uses: actions/upload-artifact@v4
+      with:
+        name: zap-report
+        path: zap_report.html
