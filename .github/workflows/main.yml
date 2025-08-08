@@ -5,6 +5,7 @@ on:
 env:
   AZURE_RG: devsecops-node-rg
   AZURE_WEBAPP_NAME: ntms-secure-nodejs-app
+  LOCATION: centralindia
 permissions:
   actions: read
   contents: read
@@ -42,8 +43,9 @@ jobs:
     needs: security-checks
     runs-on: ubuntu-latest
     env:
-      AZURE_WEBAPP_NAME: my-secure-nodejs-app
       AZURE_RG: devsecops-node-rg
+      AZURE_WEBAPP_NAME: ntms-secure-nodejs-app
+      LOCATION: centralindia
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -53,8 +55,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Create RG
+        run: |
+          az group create --name $AZURE_RG --location $LOCATION
       - name: Deploy Bicep Template
-        run: az deployment group create --resource-group ${{ env.AZURE_RG }} --template-file infra/main.bicep
+        run: az deployment group create --resource-group $AZURE_RG --template-file infra/main.bicep
 
 
       - name: Deploy App to Azure Web App
