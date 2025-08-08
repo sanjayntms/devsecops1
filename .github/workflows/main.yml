@@ -73,20 +73,30 @@ jobs:
 
   dast-scan:
    name: OWASP ZAP DAST Scan
-  # needs: build-deploy
+   #needs: build-deploy
    runs-on: ubuntu-latest
    env:
-    AZURE_RG: devsecops-node-rg
     AZURE_WEBAPP_NAME: ntms-secure-nodejs-app
+    AZURE_RG: devsecops-node-rg
     LOCATION: centralindia
+
    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Run ZAP Baseline Scan
-      run: |
-        docker run --rm -v $(pwd):/zap/wrk/:rw -t zaproxy/zap-stable zap-baseline.py \
-        -t https://ntms-secure-nodejs-app.azurewebsites.net/ -g gen.conf -r testreport.html
+      uses: zaproxy/action-baseline@v0.14.0
+      with:
+        target: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fail_action: false
+        rules_file_name: .zap/rules.tsv
+        cmd_options: "-a -z '-config scanner.attackOnStart=false'"
+        report_file_name: zap_report.html
 
     - name: Upload ZAP Report
       uses: actions/upload-artifact@v4
       with:
         name: zap-report
         path: zap_report.html
+        if-no-files-found: warn
