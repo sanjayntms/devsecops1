@@ -2,7 +2,9 @@ name: DevSecOps Azure PoC
 
 on:
   workflow_dispatch:
-
+env:
+  AZURE_RG: devsecops-node-rg
+  AZURE_WEBAPP_NAME: ntms-secure-nodejs-app
 permissions:
   actions: read
   contents: read
@@ -52,9 +54,8 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy Bicep Template
-        run: az deployment group create \
-               --resource-group $AZURE_RG \
-               --template-file infra/main.bicep
+        run: az deployment group create --resource-group ${{ env.AZURE_RG }} --template-file infra/main.bicep
+
 
       - name: Deploy App to Azure Web App
         uses: azure/webapps-deploy@v3
