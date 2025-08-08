@@ -1,0 +1,75 @@
+name: DevSecOps Azure PoC
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  security-checks:
+    name: Code & Infra Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: CodeQL Analysis
+        uses: github/codeql-action/init@v2
+        with:
+          languages: 'javascript'
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          scanArguments: "--regex --entropy=False ."
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Run Checkov on Bicep Templates
+        run: checkov -d ./infra
+
+  build-deploy:
+    name: Build & Deploy to Azure
+    needs: security-checks
+    runs-on: ubuntu-latest
+    env:
+      AZURE_WEBAPP_NAME: my-secure-nodejs-app
+      AZURE_RG: devsecops-node-rg
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy Bicep Template
+        run: az deployment group create --resource-group $AZURE_RG --template-file infra/main.bicep
+
+      - name: Deploy App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          package: ./app
+
+  dast-scan:
+    name: OWASP ZAP DAST Scan
+    needs: build-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run ZAP Baseline Scan
+        run: |
+          docker run -v $(pwd):/zap/wrk/:rw -t owasp/zap2docker-stable zap-baseline.py \
+            -t https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net \
+            -r zap_report.html
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-report
+          path: zap_report.html

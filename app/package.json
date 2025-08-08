@@ -1,0 +1,13 @@
+{
+  "name": "secure-node-app",
+  "version": "1.0.0",
+  "description": "Node.js app for DevSecOps PoC on Azure",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node tests/test.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
