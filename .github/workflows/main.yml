@@ -5,7 +5,7 @@ on:
     inputs:
       target_job:
         description: 'Job to run (security-checks, build-deploy, dast-scan)'
-        required: true
+        required: false
         default: 'security-checks'
 
 env:
