@@ -11,12 +11,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: CodeQL Analysis
-        uses: github/codeql-action/init@v2
+      - uses: github/codeql-action/init@v3
         with:
-          languages: 'javascript'
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+         languages: javascript
+
+      - uses: github/codeql-action/analyze@v3
+
 
       - name: TruffleHog Secret Scan
         uses: trufflesecurity/trufflehog@main
